@@ -47,7 +47,7 @@ class BlockingConnection(base_connection.BaseConnection):
                                       'method': callback}
         return timeout_id
 
-    def channel(self, channel_number=None):
+    def channel(self, channel_number=None, force_data_events_override=None):
         """Create a new channel with the next available or specified channel #.
 
         :param int channel_number: Specify the channel number
@@ -57,7 +57,8 @@ class BlockingConnection(base_connection.BaseConnection):
         if not channel_number:
             channel_number = self._next_channel_number()
         LOGGER.debug('Opening channel %i', channel_number)
-        self._channels[channel_number] = BlockingChannel(self, channel_number)
+        self._channels[channel_number] = BlockingChannel(self, channel_number,
+                         force_data_events_override=force_data_events_override)
         return self._channels[channel_number]
 
     def close(self, reply_code=200, reply_text='Normal shutdown'):
@@ -256,7 +257,7 @@ class BlockingChannel(channel.Channel):
     """
     NO_RESPONSE_FRAMES = ['Basic.Ack', 'Basic.Reject', 'Basic.RecoverAsync']
 
-    def __init__(self, connection, channel_number):
+    def __init__(self, connection, channel_number, force_data_events_override=None):
         """Create a new instance of the Channel
 
         :param BlockingConnection connection: The connection
@@ -266,7 +267,7 @@ class BlockingChannel(channel.Channel):
         super(BlockingChannel, self).__init__(connection, channel_number)
         self.connection = connection
         self._confirmation = False
-        self._force_data_events_override = None
+        self._force_data_events_override = force_data_events_override
         self._generator = None
         self._generator_messages = list()
         self._frames = dict()
